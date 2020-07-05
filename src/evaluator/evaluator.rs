@@ -109,30 +109,40 @@ impl Evaluator {
         // Pick out the most fittest genome
         let fittest_genome = self.evaluated_genomes.get(0).unwrap().get_genome();
         self.next_generation.push(fittest_genome);
-        
         self.fittest_genome = self.evaluated_genomes.get(0).unwrap().clone();
 
         // Fill the next generation, and mutate it, also add random mating ,)
         while self.next_generation.len() < self.config.get_population_size() {
-            println!("-------------------------");
-
             // Sexual reproduction
             let mut rng = rand::thread_rng();
 
             let should_sexually_reproduce: f32 = rng.gen();
             if should_sexually_reproduce > self.config.a_sexual_reproduction_rate {
                 // Sexual reproduction
-                let parent1 = self.evaluated_genomes.get(rng.gen_range(0, self.evaluated_genomes.len())).unwrap();
-                let parent2 = self.evaluated_genomes.get(rng.gen_range(0, self.evaluated_genomes.len())).unwrap();
+                let parent1 = self
+                    .evaluated_genomes
+                    .get(rng.gen_range(0, self.evaluated_genomes.len()))
+                    .unwrap();
+                let parent2 = self
+                    .evaluated_genomes
+                    .get(rng.gen_range(0, self.evaluated_genomes.len()))
+                    .unwrap();
 
                 // Initialize child
                 let mut child: Genome;
-                
                 // Crossover between parents
                 if parent1.get_fitness() > parent2.get_fitness() {
-                    child = Genome::crossover(&parent1.get_genome(), &parent2.get_genome(), self.config.disabled_gene_inheriting_chance);
+                    child = Genome::crossover(
+                        &parent1.get_genome(),
+                        &parent2.get_genome(),
+                        self.config.disabled_gene_inheriting_chance,
+                    );
                 } else {
-                    child = Genome::crossover(&parent2.get_genome(), &parent1.get_genome(), self.config.disabled_gene_inheriting_chance);
+                    child = Genome::crossover(
+                        &parent2.get_genome(),
+                        &parent1.get_genome(),
+                        self.config.disabled_gene_inheriting_chance,
+                    );
                 }
 
                 // Random weights mutation
@@ -140,14 +150,17 @@ impl Evaluator {
                     child.mutation(self.config.pertrubing_rate);
                 }
 
-                // Random connection mutation
-                if rng.gen::<f32>() < self.config.add_connection_rate {
-                    child.add_connection_mutation(&mut self.connection_innovation, 100);
-                }
-
                 // Random add node mutation
                 if rng.gen::<f32>() < self.config.add_node_rate {
-                    child.add_node_mutation(&mut self.connection_innovation, &mut self.node_innovation);
+                    child.add_node_mutation(
+                        &mut self.connection_innovation,
+                        &mut self.node_innovation,
+                    );
+                }
+
+                // Random connection mutation
+                if rng.gen::<f32>() < self.config.add_connection_rate {
+                    // child.add_connection_mutation(&mut self.connection_innovation, 100);
                 }
 
                 self.next_generation.push(child);

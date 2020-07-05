@@ -1,6 +1,6 @@
+use std::cmp;
 use std::collections::hash_map::Keys;
 use std::collections::HashMap;
-use std::cmp;
 
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
@@ -96,11 +96,17 @@ impl Genome {
             let weight: f32 = rng.gen_range(-1.0, 1.0);
 
             // Check if the nodes should be reversed, in case, do it
-            let reversed = if node1.get_type() == NodeGeneType::HIDDEN && node2.get_type() == NodeGeneType::INPUT {
+            let reversed = if node1.get_type() == NodeGeneType::HIDDEN
+                && node2.get_type() == NodeGeneType::INPUT
+            {
                 true
-            } else if node1.get_type() == NodeGeneType::OUTPUT && node2.get_type() == NodeGeneType::HIDDEN {
+            } else if node1.get_type() == NodeGeneType::OUTPUT
+                && node2.get_type() == NodeGeneType::HIDDEN
+            {
                 true
-            } else if node1.get_type() == NodeGeneType::OUTPUT && node2.get_type() == NodeGeneType::INPUT {
+            } else if node1.get_type() == NodeGeneType::OUTPUT
+                && node2.get_type() == NodeGeneType::INPUT
+            {
                 true
             } else {
                 false
@@ -113,9 +119,13 @@ impl Genome {
             }
 
             // Check if the connection is impossible
-            let mut connection_impossible = if node1.get_type() == NodeGeneType::INPUT && node2.get_type() == NodeGeneType::INPUT {
+            let mut connection_impossible = if node1.get_type() == NodeGeneType::INPUT
+                && node2.get_type() == NodeGeneType::INPUT
+            {
                 true
-            } else if node1.get_type() == NodeGeneType::OUTPUT && node2.get_type() == NodeGeneType::OUTPUT {
+            } else if node1.get_type() == NodeGeneType::OUTPUT
+                && node2.get_type() == NodeGeneType::OUTPUT
+            {
                 true
             } else if node1 == node2 {
                 true
@@ -128,12 +138,12 @@ impl Genome {
             let mut needs_checking: Vec<i32> = Vec::new();
             // List of nodes that requires output from node2
             let mut node_ids: Vec<i32> = Vec::new();
-            
             // Add nodes that need checking and nodes that requires output from node2
             for conn_id in self.connections.keys() {
                 let gene = self.connections.get(conn_id).unwrap();
 
-                if gene.get_in_node() == node2.get_id() { // connection comes from node2
+                if gene.get_in_node() == node2.get_id() {
+                    // connection comes from node2
                     node_ids.push(gene.get_out_node());
                     needs_checking.push(gene.get_out_node());
                 }
@@ -141,12 +151,11 @@ impl Genome {
 
             while !needs_checking.is_empty() {
                 let node_id = needs_checking.get(0).unwrap().to_owned();
-                
                 for conn_id in self.connections.keys() {
                     let gene = self.connections.get(conn_id).unwrap();
 
                     // connection comes from the needs_checking node
-                    if gene.get_in_node() == node_id { 
+                    if gene.get_in_node() == node_id {
                         node_ids.push(gene.get_out_node());
                         needs_checking.push(gene.get_out_node());
                     }
@@ -165,10 +174,12 @@ impl Genome {
             let mut connection_exists: bool = false;
             for con in self.connections.values() {
                 // Existing connection
-                if con.get_in_node() == node1.get_id() && con.get_out_node() == node2.get_id() { 
+                if con.get_in_node() == node1.get_id() && con.get_out_node() == node2.get_id() {
                     connection_exists = true;
                     break;
-                } else if con.get_in_node() == node2.get_id() && con.get_out_node() == node1.get_id() {
+                } else if con.get_in_node() == node2.get_id()
+                    && con.get_out_node() == node1.get_id()
+                {
                     // Existing reverse connection
                     connection_exists = true;
                     break;
@@ -179,17 +190,23 @@ impl Genome {
                 continue;
             }
 
-            let new_con = ConnectionGene::new(node1.get_id(), node2.get_id(), weight, true, innovation.get_innovation());
+            let new_con = ConnectionGene::new(
+                node1.get_id(),
+                node2.get_id(),
+                weight,
+                true,
+                innovation.get_innovation(),
+            );
             self.connections.insert(new_con.get_innovation(), new_con);
 
             success = true;
         }
-        
         if !success {
             println!("A mutation connection could not be established");
         }
     }
 
+    // ! FUNCTION IS NOT RELIABLE, MAY SOMETIMES LOSE INPUTS AND OUTPUTS
     /// # add_node_mutation
     /// Adds a new mutation between two other nodes
     pub fn add_node_mutation(
@@ -216,6 +233,7 @@ impl Genome {
         let length = rng.gen_range(0, suitable_connections.len());
         let con = suitable_connections.get(length).unwrap();
         let con = self.connections.get_mut(con).unwrap();
+
         // Get the connections in and out nodes, then disable the connection and create a new one
         let in_node = self.nodes.get(&(con.get_in_node() as i32)).unwrap();
         let out_node = self.nodes.get(&(con.get_out_node() as i32)).unwrap();
@@ -239,6 +257,7 @@ impl Genome {
             true,
             connection_innovation.get_innovation(),
         );
+
         self.nodes.insert(new_node.get_id(), new_node);
         self.connections
             .insert(in_to_new.get_innovation(), in_to_new);
@@ -252,8 +271,13 @@ impl Genome {
     /// **parent_1** is always the more "fit" parent
     ///
     /// **parent_2** is the less "fit" parent
-    pub fn crossover(parent_1: &Genome, parent_2: &Genome, disabled_gene_inheriting_chance: f32) -> Genome {
+    pub fn crossover(
+        parent_1: &Genome,
+        parent_2: &Genome,
+        disabled_gene_inheriting_chance: f32,
+    ) -> Genome {
         let mut child = Genome::new();
+
         // Add nodes to the child from the most fit parent, in this case it's parent 1
         for parent_1_node in parent_1.get_node_genes().values() {
             child.add_node_gene(parent_1_node.clone());
@@ -320,7 +344,7 @@ impl Genome {
         let disjoint_genes = Genome::count_disjoint_genes(&genome1, &genome2) as f32;
         let avg_weight_diff = Genome::average_weight_diff(&genome1, &genome2);
 
-        // Number of genes in the larger genome, normalizes for genome size 
+        // Number of genes in the larger genome, normalizes for genome size
         // (can be set to 1 if both genomes are small, i.e, consists of fewer than 20 genes)
         let n = 1.0;
 
@@ -330,11 +354,13 @@ impl Genome {
     pub fn count_matching_genes(genome1: &Genome, genome2: &Genome) -> i32 {
         let mut matching_genes: i32 = 0;
 
-        let node_keys1 = Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_node_genes().keys()));
-        let node_keys2 = Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_node_genes().keys()));
+        let node_keys1 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_node_genes().keys()));
+        let node_keys2 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_node_genes().keys()));
 
-        let highest_innovation1 = node_keys1.get(node_keys1.len()-1).unwrap();
-        let highest_innovation2 = node_keys2.get(node_keys2.len()-1).unwrap();
+        let highest_innovation1 = node_keys1.get(node_keys1.len() - 1).unwrap();
+        let highest_innovation2 = node_keys2.get(node_keys2.len() - 1).unwrap();
 
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
@@ -343,7 +369,6 @@ impl Genome {
 
             let node1 = node_genes_genome1.get(&i);
             let node2 = node_genes_genome2.get(&i);
-            
             let node1_exists = match node1 {
                 Some(_) => true,
                 None => false,
@@ -361,11 +386,13 @@ impl Genome {
             }
         }
 
-        let con_keys1 = Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
-        let con_keys2 = Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
+        let con_keys1 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
+        let con_keys2 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
 
-        let highest_innovation1 = con_keys1.get(con_keys1.len()-1).unwrap();
-        let highest_innovation2 = con_keys2.get(con_keys2.len()-1).unwrap();
+        let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
+        let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
 
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
@@ -397,12 +424,13 @@ impl Genome {
     pub fn count_disjoint_genes(genome1: &Genome, genome2: &Genome) -> i32 {
         let mut disjoint_genes: i32 = 0;
 
-        let node_keys1 = Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_node_genes().keys()));
-        let node_keys2 = Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_node_genes().keys()));
-        
-        let highest_innovation1 = node_keys1.get(node_keys1.len()-1).unwrap();
-        let highest_innovation2 = node_keys2.get(node_keys2.len()-1).unwrap();
+        let node_keys1 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_node_genes().keys()));
+        let node_keys2 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_node_genes().keys()));
 
+        let highest_innovation1 = node_keys1.get(node_keys1.len() - 1).unwrap();
+        let highest_innovation2 = node_keys2.get(node_keys2.len() - 1).unwrap();
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let node_genes_genome1 = genome1.get_node_genes();
@@ -429,12 +457,13 @@ impl Genome {
             }
         }
 
-        let con_keys1 = Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
-        let con_keys2 = Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
-        
-        let highest_innovation1 = con_keys1.get(node_keys1.len()-1).unwrap();
-        let highest_innovation2 = con_keys2.get(node_keys2.len()-1).unwrap();
-        
+        let con_keys1 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
+        let con_keys2 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
+
+        let highest_innovation1 = con_keys1.get(node_keys1.len() - 1).unwrap();
+        let highest_innovation2 = con_keys2.get(node_keys2.len() - 1).unwrap();
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let connection_genes_genome1 = genome1.get_connection_genes();
@@ -442,7 +471,6 @@ impl Genome {
 
             let connection1 = connection_genes_genome1.get(&i);
             let connection2 = connection_genes_genome2.get(&i);
-            
             let con1_exists = match connection1 {
                 Some(_) => true,
                 None => false,
@@ -465,13 +493,14 @@ impl Genome {
 
     pub fn count_excess_genes(genome1: &Genome, genome2: &Genome) -> i32 {
         let mut excess_genes: i32 = 0;
-        
-        let node_keys1 = Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_node_genes().keys()));
-        let node_keys2 = Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_node_genes().keys()));
-        
-        let highest_innovation1 = node_keys1.get(node_keys1.len()-1).unwrap();
-        let highest_innovation2 = node_keys2.get(node_keys2.len()-1).unwrap();
 
+        let node_keys1 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_node_genes().keys()));
+        let node_keys2 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_node_genes().keys()));
+
+        let highest_innovation1 = node_keys1.get(node_keys1.len() - 1).unwrap();
+        let highest_innovation2 = node_keys2.get(node_keys2.len() - 1).unwrap();
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let node_genes_genome1 = genome1.get_node_genes();
@@ -496,13 +525,14 @@ impl Genome {
                 excess_genes += 1;
             }
         }
-        
-        let con_keys1 = Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
-        let con_keys2 = Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
-        
-        let highest_innovation1 = con_keys1.get(node_keys1.len()-1).unwrap();
-        let highest_innovation2 = con_keys2.get(node_keys2.len()-1).unwrap();
-        
+
+        let con_keys1 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
+        let con_keys2 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
+
+        let highest_innovation1 = con_keys1.get(node_keys1.len() - 1).unwrap();
+        let highest_innovation2 = con_keys2.get(node_keys2.len() - 1).unwrap();
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let connection_genes_genome1 = genome1.get_connection_genes();
@@ -510,7 +540,6 @@ impl Genome {
 
             let connection1 = connection_genes_genome1.get(&i);
             let connection2 = connection_genes_genome2.get(&i);
-            
             let con1_exists = match connection1 {
                 Some(_) => true,
                 None => false,
@@ -527,7 +556,6 @@ impl Genome {
                 excess_genes += 1;
             }
         }
-        
         excess_genes
     }
 
@@ -535,12 +563,13 @@ impl Genome {
         let mut matching_genes: i32 = 0;
         let mut weight_difference: f32 = 0.0;
 
-        let con_keys1 = Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
-        let con_keys2 = Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
+        let con_keys1 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
+        let con_keys2 =
+            Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
 
-        let highest_innovation1 = con_keys1.get(con_keys1.len()-1).unwrap();
-        let highest_innovation2 = con_keys2.get(con_keys2.len()-1).unwrap();
-        
+        let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
+        let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let connection_genes_genome1 = genome1.get_connection_genes();
@@ -559,10 +588,11 @@ impl Genome {
                 None => false,
             };
 
-            if con1_exists && con2_exists { 
+            if con1_exists && con2_exists {
                 // both genomes has the gene w/ this innovation number
                 matching_genes += 1;
-                weight_difference += (connection1.unwrap().get_weight()-connection2.unwrap().get_weight()).abs();
+                weight_difference +=
+                    (connection1.unwrap().get_weight() - connection2.unwrap().get_weight()).abs();
             }
         }
 
@@ -571,7 +601,11 @@ impl Genome {
 
     /// # as_sorted_vec
     /// Sorts a vector in a ascending order
-    pub fn as_sorted_vec<K>(c: Vec<K>) -> Vec<K> where K: Clone, K: Ord {
+    pub fn as_sorted_vec<K>(c: Vec<K>) -> Vec<K>
+    where
+        K: Clone,
+        K: Ord,
+    {
         let mut c: Vec<K> = c.iter().map(|e| e.clone()).collect();
         c.sort_by(|a, b| a.cmp(&b));
 
@@ -580,7 +614,10 @@ impl Genome {
 
     /// # keys_to_vec
     /// Takes HashMap keys and converts them to a owned vector
-    pub fn keys_to_vec<K, V>(c: Keys<'_, K, V>) -> Vec<K> where K: Clone {
+    pub fn keys_to_vec<K, V>(c: Keys<'_, K, V>) -> Vec<K>
+    where
+        K: Clone,
+    {
         // Might be slow as we are allocating memory every time the function is called
         let mut keys: Vec<K> = Vec::new();
         for k in c {
