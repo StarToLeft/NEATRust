@@ -1,0 +1,24 @@
+[package]
+name = "neat-java"
+version = "0.1.0"
+authors = ["startoleft"]
+edition = "2018"
+
+[dependencies]
+rand = "0.7.3"
+rand_distr = "0.2.2"
+imageproc = "0.20.0"
+image = "0.23.6"
+rusttype = "*"
+
+[profile.release]
+opt-level = 3
+debug = true
+
+[profile.bench]
+opt-level = 3
+debug = true
+rpath = false
+lto = false
+debug-assertions = false
+codegen-units = 1
