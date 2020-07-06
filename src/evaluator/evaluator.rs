@@ -107,7 +107,12 @@ impl Evaluator {
         self.next_generation.clear();
 
         // Pick out the most fittest genome
-        let fittest_genome = self.evaluated_genomes.get(0).unwrap().get_genome();
+        let fittest_genome: Genome = self.evaluated_genomes.get(0).unwrap().get_genome();
+
+        println!(
+            "FITTEST GENOME: {:?}\n\n",
+            (fittest_genome.get_node_genes())
+        );
         self.next_generation.push(fittest_genome);
         self.fittest_genome = self.evaluated_genomes.get(0).unwrap().clone();
 
@@ -152,15 +157,17 @@ impl Evaluator {
 
                 // Random add node mutation
                 if rng.gen::<f32>() < self.config.add_node_rate {
-                    child.add_node_mutation(
-                        &mut self.connection_innovation,
-                        &mut self.node_innovation,
-                    );
+                    // ! Panics, 'UniformSampler::sample_single: low >= high'
+                    
+                    // child.add_node_mutation(
+                    //     &mut self.connection_innovation,
+                    //     &mut self.node_innovation,
+                    // );
                 }
 
                 // Random connection mutation
                 if rng.gen::<f32>() < self.config.add_connection_rate {
-                    // child.add_connection_mutation(&mut self.connection_innovation, 100);
+                    child.add_connection_mutation(&mut self.connection_innovation, 100);
                 }
 
                 self.next_generation.push(child);

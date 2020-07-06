@@ -230,7 +230,7 @@ impl Genome {
             return;
         }
 
-        let length = rng.gen_range(0, suitable_connections.len());
+        let length = rng.gen_range(0, suitable_connections.len()-1);
         let con = suitable_connections.get(length).unwrap();
         let con = self.connections.get_mut(con).unwrap();
 
@@ -243,6 +243,7 @@ impl Genome {
 
         // Add the new node and the new connections
         let new_node = NodeGene::new(NodeGeneType::HIDDEN, node_innovation.get_innovation());
+        
         let in_to_new = ConnectionGene::new(
             in_node.get_id(),
             new_node.get_id(),
@@ -250,6 +251,7 @@ impl Genome {
             true,
             connection_innovation.get_innovation(),
         );
+        
         let new_to_out = ConnectionGene::new(
             new_node.get_id(),
             out_node.get_id(),
