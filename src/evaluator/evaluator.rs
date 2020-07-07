@@ -19,9 +19,6 @@ pub struct Evaluator {
 
     fittest_genome: FitnessGenome, // Last generation fittest genome
     last_generation_results: Vec<FitnessGenome>, // Last generations genome fitness-results
-
-    node_innovation: Counter,
-    connection_innovation: Counter,
 }
 
 impl Evaluator {
@@ -35,9 +32,6 @@ impl Evaluator {
 
             fittest_genome: FitnessGenome::new(Genome::new(), 0.0),
             last_generation_results: Vec::new(),
-
-            node_innovation: Counter::new(),
-            connection_innovation: Counter::new(),
         }
     }
 
@@ -48,7 +42,7 @@ impl Evaluator {
         genome_provider: Box<dyn GenesisGenomeProvider>,
     ) {
         self.config = config.clone();
-        self.genomes = Vec::with_capacity(self.config.get_population_size());
+        self.genomes = Vec::new();
         for _ in 0..self.config.get_population_size() {
             let g: Genome = genome_provider
                 .as_ref()
@@ -60,11 +54,9 @@ impl Evaluator {
         self.next_generation = Vec::new();
 
         self.last_generation_results = Vec::new();
-        self.node_innovation = Counter::new();
-        self.connection_innovation = Counter::new();
     }
 
-    pub fn evaluate_generation(&mut self, fitness_provider: Box<dyn FitnessGenomeProvider>) {
+    pub fn evaluate_generation(&mut self, fitness_provider: Box<dyn FitnessGenomeProvider>, mut node_innovation: &mut Counter, mut connection_innovation: &mut Counter) {
         // Reset
         self.last_generation_results.clear();
         self.evaluated_genomes.clear();
@@ -109,10 +101,6 @@ impl Evaluator {
         // Pick out the most fittest genome
         let fittest_genome: Genome = self.evaluated_genomes.get(0).unwrap().get_genome();
 
-        println!(
-            "FITTEST GENOME: {:?}\n\n",
-            (fittest_genome.get_node_genes())
-        );
         self.next_generation.push(fittest_genome);
         self.fittest_genome = self.evaluated_genomes.get(0).unwrap().clone();
 
@@ -157,17 +145,15 @@ impl Evaluator {
 
                 // Random add node mutation
                 if rng.gen::<f32>() < self.config.add_node_rate {
-                    // ! Panics, 'UniformSampler::sample_single: low >= high'
-                    
-                    // child.add_node_mutation(
-                    //     &mut self.connection_innovation,
-                    //     &mut self.node_innovation,
-                    // );
+                    child.add_node_mutation(
+                        &mut connection_innovation,
+                        &mut node_innovation,
+                    );
                 }
 
                 // Random connection mutation
                 if rng.gen::<f32>() < self.config.add_connection_rate {
-                    child.add_connection_mutation(&mut self.connection_innovation, 100);
+                    child.add_connection_mutation(&mut connection_innovation, 100);
                 }
 
                 self.next_generation.push(child);

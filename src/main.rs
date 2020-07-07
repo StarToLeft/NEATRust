@@ -22,6 +22,8 @@ use lib::NodeGeneType;
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
+use std::env;
+
 // Genesis provider
 pub struct GenesisProvider {}
 
@@ -55,7 +57,7 @@ impl GenomeFitnessProvider {
 
 impl FitnessGenomeProvider for GenomeFitnessProvider {
     fn fitness_genome_evaluator(&self, genome: &Genome) -> f32 {
-        return genome.get_connection_genes().len() as f32;
+        return -(genome.get_connection_genes().len() as f32);
     }
 }
 
@@ -90,7 +92,7 @@ fn main() {
 
     // Configuration
     // Assign a starting population
-    let config: Config = Config::new(10);
+    let config: Config = Config::new(100);
 
     // Genesis provider
     let provider = GenesisProvider::new();
@@ -106,14 +108,14 @@ fn main() {
         let fitness_provider = GenomeFitnessProvider::new();
 
         // Evaluate the generation
-        evaluator.evaluate_generation(Box::new(fitness_provider));
+        evaluator.evaluate_generation(Box::new(fitness_provider), &mut node_innovation, &mut connection_innovation);
 
-        // println!("Generation: {}", i);
-        // println!(
-        //     "\t Highest fitness: {}",
-        //     evaluator.get_fittest_genome().get_fitness()
-        // );
-        // println!("\t Amount of genomes: {}", evaluator.get_genome_amount());
+        println!("Generation: {}", i);
+        println!(
+            "\t Highest fitness: {}",
+            evaluator.get_fittest_genome().get_fitness()
+        );
+        println!("\t Amount of genomes: {}", evaluator.get_genome_amount());
         // println!("\t Printing all genomes");
         // let mut k: i32 = 0;
         // for fitness_genome in evaluator.get_last_generation_results() {

@@ -230,13 +230,13 @@ impl Genome {
             return;
         }
 
-        let length = rng.gen_range(0, suitable_connections.len()-1);
+        let length = rng.gen_range(0, suitable_connections.len());
         let con = suitable_connections.get(length).unwrap();
         let con = self.connections.get_mut(con).unwrap();
 
         // Get the connections in and out nodes, then disable the connection and create a new one
-        let in_node = self.nodes.get(&(con.get_in_node() as i32)).unwrap();
-        let out_node = self.nodes.get(&(con.get_out_node() as i32)).unwrap();
+        let in_node = self.nodes.get(&(con.get_in_node() as i32)).unwrap().clone();
+        let out_node = self.nodes.get(&(con.get_out_node() as i32)).unwrap().clone();
 
         // Disable the connection
         con.disable();
@@ -261,6 +261,7 @@ impl Genome {
         );
 
         self.nodes.insert(new_node.get_id(), new_node);
+
         self.connections
             .insert(in_to_new.get_innovation(), in_to_new);
         self.connections
