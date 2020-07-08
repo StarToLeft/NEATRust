@@ -57,10 +57,11 @@ pub struct Config {
     pub offspring_from_crossover: f32,
 
     population_size: usize,
+    generation_count: usize,
 }
 
 impl Config {
-    pub fn new(population_size: usize) -> Config {
+    pub fn new(population_size: usize, generation_count: usize) -> Config {
         Config {
             c1: 1.0,
             c2: 1.0,
@@ -81,10 +82,15 @@ impl Config {
             offspring_from_crossover: 0.75,
 
             population_size,
+            generation_count,
         }
     }
 
     pub fn get_population_size(&self) -> usize {
         self.population_size
+    }
+
+    pub fn get_generation_count(&self) -> usize {
+        self.generation_count
     }
 }

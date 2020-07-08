@@ -6,7 +6,6 @@
 /// http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
 ///
 /// Made in 2020-07-03 in Gothenburg, Sweden.
-
 mod lib;
 use lib::evaluator::FitnessGenomeProvider;
 use lib::evaluator::GenesisGenomeProvider;
@@ -57,7 +56,7 @@ impl GenomeFitnessProvider {
 
 impl FitnessGenomeProvider for GenomeFitnessProvider {
     fn fitness_genome_evaluator(&self, genome: &Genome) -> f32 {
-        return -(genome.get_connection_genes().len() as f32);
+        return genome.get_connection_genes().len() as f32;
     }
 }
 
@@ -91,8 +90,8 @@ fn main() {
     genome.add_connection_gene(ConnectionGene::new(n2, n3, 0.5, true, c1));
 
     // Configuration
-    // Assign a starting population
-    let config: Config = Config::new(100);
+    // Assign a starting population and generation count
+    let config: Config = Config::new(10, 1000);
 
     // Genesis provider
     let provider = GenesisProvider::new();
@@ -101,14 +100,16 @@ fn main() {
     let mut evaluator = Evaluator::new();
     evaluator.init(&config, &genome, Box::new(provider));
 
-    for i in 1..config.get_population_size() + 1 {
-        println!("Beginning of generation {}", i);
-
+    for i in 1..config.get_generation_count() + 1 {
         // Fitness provider
         let fitness_provider = GenomeFitnessProvider::new();
 
         // Evaluate the generation
-        evaluator.evaluate_generation(Box::new(fitness_provider), &mut node_innovation, &mut connection_innovation);
+        evaluator.evaluate_generation(
+            Box::new(fitness_provider),
+            &mut node_innovation,
+            &mut connection_innovation,
+        );
 
         println!("Generation: {}", i);
         println!(
@@ -116,18 +117,6 @@ fn main() {
             evaluator.get_fittest_genome().get_fitness()
         );
         println!("\t Amount of genomes: {}", evaluator.get_genome_amount());
-        // println!("\t Printing all genomes");
-        // let mut k: i32 = 0;
-        // for fitness_genome in evaluator.get_last_generation_results() {
-        //     k += 1;
-        //     println!(
-        //         "\t\t Index={}\t N{}\t C{}\t fitness={}",
-        //         k,
-        //         fitness_genome.get_genome().get_node_genes().len(),
-        //         fitness_genome.get_genome().get_connection_genes().len(),
-        //         fitness_genome.get_fitness()
-        //     );
-        // }
 
         // Print populations
         let mut fittest_genome = evaluator.get_fittest_genome().get_genome();

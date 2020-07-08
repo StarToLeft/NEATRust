@@ -18,8 +18,6 @@ impl GenomePrinter {
     }
 
     pub fn print_genome(&mut self, genome: &mut Genome, path: &str, name: &str) {
-        let timer = std::time::Instant::now();
-
         let path = format!("./output/{}.png", path);
         let path = Path::new(&path);
         let width = 800;
@@ -283,9 +281,6 @@ impl GenomePrinter {
         }
 
         image.save(path).unwrap();
-
-        let time_taken = timer.elapsed();
-        println!("Save time for {} took {:?}", name, time_taken);
     }
 }
 

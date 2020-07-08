@@ -24,7 +24,7 @@ pub struct Evaluator {
 impl Evaluator {
     pub fn new() -> Evaluator {
         Evaluator {
-            config: Config::new(0),
+            config: Config::new(0, 0),
 
             next_generation: Vec::new(),
             genomes: Vec::new(),
