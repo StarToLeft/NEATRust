@@ -83,6 +83,7 @@ impl Evaluator {
     ) {
         self.speciate();
         self.calculate_fitness(&fitness_provider);
+        self.sort_players();
         self.sort_species();
         self.kill_species();
         self.set_best_player();
@@ -202,8 +203,6 @@ impl Evaluator {
         let mut temp: Vec<Species> = Vec::new();
         let mut s = 0;
         while s != self.species.len() {
-            s += 1;
-
             let mut max: f64 = 0.0;
             let mut max_index: usize = 0;
             for j in 0..self.species.len() {
@@ -216,9 +215,18 @@ impl Evaluator {
             temp.push(self.species.get(max_index).unwrap().clone());
             self.species.remove(max_index);
             s -= 1;
+            s += 1;
         }
 
         self.species = temp;
+    }
+
+    pub fn sort_players(&mut self) {
+        self.players.sort_by(|a, b| {
+            b.get_fitness()
+                .partial_cmp(&a.get_fitness())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
     }
 
     pub fn kill_species(&mut self) {

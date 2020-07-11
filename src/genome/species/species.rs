@@ -131,15 +131,7 @@ impl Species {
     pub fn refresh_best_fitness(&mut self) -> f64 {
         self.sort_players();
 
-        let mut best_fitness = self.best_fitness;
-        for player in self.players.iter() {
-            if player.get_fitness() > best_fitness {
-                best_fitness = player.get_fitness();
-            }
-        }
-        if best_fitness != self.best_fitness {
-            self.best_fitness = best_fitness;
-        }
+        self.best_fitness = self.get_best_player().get_fitness();
 
         self.best_fitness
     }
