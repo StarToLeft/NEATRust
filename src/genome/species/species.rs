@@ -50,13 +50,12 @@ impl Species {
         }
 
         let cutoff_index = self.players.len() / 2;
-        let ev_genomes = self.players.clone();
-        let mut index = 0;
-        for _ in ev_genomes.iter() {
-            if index > cutoff_index {
-                self.players.remove(index);
+        let mut i = 0;
+        while i < self.players.len() {
+            if i > cutoff_index {
+                self.players.remove(i);
             } else {
-                index += 1;
+                i += 1;
             }
         }
 
@@ -105,8 +104,15 @@ impl Species {
     /// # same_species
     /// Checks if a genome belongs to the same species
     pub fn same_species(&mut self, g: Genome, config: &Config) -> bool {
-        let distance =
+        let mut distance =
             Genome::compatibility_distance(&self.rep, &g, config.c1, config.c2, config.c3);
+
+        // TODO: Some distances are set to NaN (the float is set to an incorrect value)
+
+        if distance == f64::NAN {
+            println!("{:?}", (distance));
+            distance = 1.1; 
+        }
 
         config.compatibility_threshold > distance
     }
@@ -163,7 +169,7 @@ impl Species {
         mut node_innovation: &mut Counter,
         config: &Config,
     ) -> FitnessGenome {
-        let mut child: FitnessGenome = FitnessGenome::new_empty(Genome::new());
+        let mut child: FitnessGenome;
 
         // Select sort of random parents
         let parent1 = self.select_parent().clone();
@@ -177,15 +183,13 @@ impl Species {
                 &parent1.genome,
                 config.disabled_gene_inheriting_chance,
             ));
-          } else {
+        } else {
             child = FitnessGenome::new_empty(Genome::crossover(
                 &parent1.genome,
                 &parent2.genome,
                 config.disabled_gene_inheriting_chance,
             ));
-          }
-
-        
+        }
 
         let mut rng = rand::thread_rng();
 

@@ -9,14 +9,10 @@ use crate::GenomePrinter;
 pub mod fitness_genome;
 use crate::FitnessGenome;
 
-use rand::Rng;
-
-// https://github.com/hydrozoa-yt/hydroneat/blob/master/src/com/hydrozoa/hydroneat/Evaluator.java
-
 pub struct Evaluator {
     config: Config,
 
-    players: Vec<FitnessGenome>, // stores all genomes ("players") of current generation
+    players: Vec<FitnessGenome>,
     species: Vec<Species>,
 
     best_player: FitnessGenome,
@@ -113,9 +109,16 @@ impl Evaluator {
             }
         }
 
-        // Check for flooring issues leading to few children being created
+        // Check for flooring issues leading to wrong amount of children being created
         while children.len() < self.players.len() {
             // Generate children from the best species
+
+            // Check if all species have gotten killed
+            if self.species.len() < 1 {
+                println!("All species have gotten killed, ending generation");
+                return;
+            }
+ 
             children.push(self.species.get_mut(0).unwrap().generate_offspring(
                 &mut self.connection_innovation,
                 &mut self.node_innovation,
@@ -123,8 +126,9 @@ impl Evaluator {
             ));
         }
 
-        self.players.clear();
-        self.players = children;
+        // Assign the new players
+        self.update_players();
+        self.players.append(&mut children);
 
         self.generation_id.get_innovation();
         println!(
@@ -135,17 +139,23 @@ impl Evaluator {
         );
 
         // Save the genomes as images
-        let mut printer = GenomePrinter::new();
-        for (i, p) in self.players.iter().enumerate() {
-            if p.fitness != 0.0 {
-                println!("{:?}", (p));
-            }
+        // let mut printer = GenomePrinter::new();
+        // for (i, p) in self.players.iter().enumerate() {
+        //     let _i = i.to_string();
+        //     let mut name = String::from("genome_");
+        //     name.push_str(&_i);
 
-            let _i = i.to_string();
-            let mut name = String::from("genome_");
-            name.push_str(&_i);
+        //     printer.print_genome(&mut p.get_genome(), &name, &name);
+        // }
+    }
 
-            printer.print_genome(&mut p.get_genome(), &name, &name);
+    pub fn update_players(&mut self) {
+        self.players.clear();
+
+        for s in self.species.iter() {
+            let mut species_players = s.players.clone();
+
+            self.players.append(&mut species_players);
         }
     }
 
@@ -170,17 +180,6 @@ impl Evaluator {
             if !species_found {
                 self.species.push(Species::new(p.get_genome()));
             }
-        }
-
-        // Remove empty species
-        let mut i = 0;
-        while i < self.species.len() {
-            if self.species[i].players.len() == 0 {
-                self.species.remove(i);
-                i -= 1;
-            }
-
-            i += 1;
         }
     }
 
