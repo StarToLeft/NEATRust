@@ -16,7 +16,13 @@ pub use counter::Counter;
 #[path = "./evaluator/evaluator.rs"]
 pub mod evaluator;
 pub use evaluator::Evaluator;
+pub use evaluator::fitness_genome::FitnessGenome;
+
 
 #[path = "./config.rs"]
 pub mod config;
 pub use config::Config;
+
+#[path = "./genome/species/species.rs"]
+pub mod species;
+pub use species::Species;

@@ -3,27 +3,27 @@ pub struct Config {
     /***
      * constant used in genomic distance calculation - this is the weight of excess genes
      */
-    pub c1: f32,
+    pub c1: f64,
     
     /***
      * constant used in genomic distance calculation - this is the weight of disjoint genes
      */
-    pub c2: f32,
+    pub c2: f64,
     
     /**
      * constant used in genomic distance calculation - this is the weight of average connection weight difference
      */
-    pub c3: f32,
+    pub c3: f64,
     
     /**
      * genomic distance we allow before two genomes are in seperate species - two genomes belong to the same species if genomic difference is less than this number
      */
-    pub dt: f32,
+    pub dt: f64,
 
     /**
      * Fraction of children genomes resulting from mutation without crossover. The remaining children come from mating with corssover.
      */
-    pub a_sexual_reproduction_rate: f32,
+    pub a_sexual_reproduction_rate: f64,
     
     /**
      * chance for each child to have it's weights mutated, each weight in the genome having a PERTURBING_RATE chance of being uniformly perturbed, and 1-PERTURBING_RATE chance of being assigned a new random value
@@ -54,7 +54,17 @@ pub struct Config {
     /**
      * Percentage of offspring generated using crossover of two parents - the rest comes from asexual mutation
      */
-    pub offspring_from_crossover: f32,
+    pub offspring_from_crossover: f64,
+
+    /**
+     * Coefficient for putting genomes into species
+     */
+    pub compatibility_threshold: f64,
+
+    /**
+     * Coefficient for when to kill a inactive species
+     */
+    pub max_species_staleness_before_kill: i32,
 
     population_size: usize,
     generation_count: usize,
@@ -63,9 +73,9 @@ pub struct Config {
 impl Config {
     pub fn new(population_size: usize, generation_count: usize) -> Config {
         Config {
-            c1: 1.0,
-            c2: 1.0,
-            c3: 0.4,
+            c1: 1.5,
+            c2: 0.8,
+            c3: 1.0,
             dt: 3.0,
 
             a_sexual_reproduction_rate: 0.25,
@@ -80,6 +90,10 @@ impl Config {
             add_node_rate: 0.03,
 
             offspring_from_crossover: 0.75,
+
+            compatibility_threshold: 1.0,
+
+            max_species_staleness_before_kill: 15,
 
             population_size,
             generation_count,

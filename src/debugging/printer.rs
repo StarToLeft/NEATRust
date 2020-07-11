@@ -70,7 +70,7 @@ impl GenomePrinter {
             let mut current = 0;
 
             for node in inputs {
-                let mut pos = 600.0 * (current as f32 / input_count as f32);
+                let mut pos = 600.0 * (current as f64 / input_count as f64);
                 if pos == 0.0 {
                     pos = 1.0;
                 }
@@ -117,7 +117,7 @@ impl GenomePrinter {
             let mut current = 0;
 
             for node in hidden {
-                let mut pos = 600.0 * (current as f32 / hidden_count as f32);
+                let mut pos = 600.0 * (current as f64 / hidden_count as f64);
                 if pos == 0.0 {
                     pos = 1.0;
                 }
@@ -183,7 +183,7 @@ impl GenomePrinter {
             let mut current = 0;
 
             for node in outputs {
-                let mut pos = 600.0 * (current as f32 / outputs_count as f32);
+                let mut pos = 600.0 * (current as f64 / outputs_count as f64);
                 if pos == 0.0 {
                     pos = 1.0;
                 }
@@ -261,7 +261,7 @@ impl GenomePrinter {
             }
 
             // Weights
-            let mut pos = 600.0 * (current as f32 / connection_count as f32);
+            let mut pos = 600.0 * (current as f64 / connection_count as f64);
             if pos == 0.0 {
                 pos = 1.0;
             }

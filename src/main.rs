@@ -17,6 +17,8 @@ use lib::Genome;
 use lib::GenomePrinter;
 use lib::NodeGene;
 use lib::NodeGeneType;
+use lib::FitnessGenome;
+use lib::Species;
 
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
@@ -55,8 +57,8 @@ impl GenomeFitnessProvider {
 }
 
 impl FitnessGenomeProvider for GenomeFitnessProvider {
-    fn fitness_genome_evaluator(&self, genome: &Genome) -> f32 {
-        return genome.get_connection_genes().len() as f32;
+    fn fitness_genome_evaluator(&self, genome: &Genome) -> f64 {
+        return genome.get_node_genes().len() as f64;
     }
 }
 
@@ -91,7 +93,7 @@ fn main() {
 
     // Configuration
     // Assign a starting population and generation count
-    let config: Config = Config::new(10, 1000);
+    let config: Config = Config::new(10, 30);
 
     // Genesis provider
     let provider = GenesisProvider::new();
@@ -106,17 +108,15 @@ fn main() {
 
         // Evaluate the generation
         evaluator.evaluate_generation(
-            Box::new(fitness_provider),
-            &mut node_innovation,
-            &mut connection_innovation,
+            Box::new(fitness_provider)
         );
 
-        println!("Generation: {}", i);
-        println!(
-            "\t Highest fitness: {}",
-            evaluator.get_fittest_genome().get_fitness()
-        );
-        println!("\t Amount of genomes: {}", evaluator.get_genome_amount());
+        // println!("Generation: {}", i);
+        // println!(
+        //     "\t Highest fitness: {}",
+        //     evaluator.get_fittest_genome().get_fitness()
+        // );
+        // println!("\t Amount of genomes: {}", evaluator.get_genome_amount());
 
         // Print populations
         let mut fittest_genome = evaluator.get_fittest_genome().get_genome();

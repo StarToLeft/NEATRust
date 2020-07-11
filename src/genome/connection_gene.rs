@@ -2,7 +2,7 @@
 pub struct ConnectionGene {
     in_node: i32,
     out_node: i32,
-    weight: f32,
+    weight: f64,
 
     // Also called "enabled" or "disabled", whether the connection is active
     expressed: bool,
@@ -10,7 +10,7 @@ pub struct ConnectionGene {
 }
 
 impl ConnectionGene {
-    pub fn new(in_node: i32, out_node: i32, weight: f32, expressed: bool, innovation: i32) -> Self {
+    pub fn new(in_node: i32, out_node: i32, weight: f64, expressed: bool, innovation: i32) -> Self {
         Self {
             in_node,
             out_node,
@@ -28,7 +28,7 @@ impl ConnectionGene {
         self.out_node.to_owned()
     }
 
-    pub fn get_weight(&self) -> f32 {
+    pub fn get_weight(&self) -> f64 {
         self.weight.to_owned()
     }
 
@@ -48,7 +48,7 @@ impl ConnectionGene {
         self.innovation.to_owned()
     }
 
-    pub fn set_weight(&mut self, weight: f32) {
+    pub fn set_weight(&mut self, weight: f64) {
         self.weight = weight;
     }
 }

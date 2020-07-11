@@ -17,8 +17,8 @@ use crate::Counter;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Genome {
-    connections: HashMap<i32, ConnectionGene>,
-    nodes: HashMap<i32, NodeGene>,
+    pub connections: HashMap<i32, ConnectionGene>,
+    pub nodes: HashMap<i32, NodeGene>,
 }
 
 impl Genome {
@@ -58,7 +58,7 @@ impl Genome {
                 con.set_weight(con.get_weight() * v);
             } else {
                 // Assign a weight between -2.0 and 2.0
-                let rnd_float: f32 = rng.gen_range(-2.0, 2.0);
+                let rnd_float: f64 = rng.gen_range(-2.0, 2.0);
                 con.set_weight(rnd_float);
             }
         }
@@ -93,7 +93,7 @@ impl Genome {
 
             let mut node1 = self.nodes.get(&key_node1).unwrap();
             let mut node2 = self.nodes.get(&key_node2).unwrap();
-            let weight: f32 = rng.gen_range(-1.0, 1.0);
+            let weight: f64 = rng.gen_range(-1.0, 1.0);
 
             // Check if the nodes should be reversed, in case, do it
             let reversed = if node1.get_type() == NodeGeneType::HIDDEN
@@ -236,14 +236,17 @@ impl Genome {
 
         // Get the connections in and out nodes, then disable the connection and create a new one
         let in_node = self.nodes.get(&(con.get_in_node() as i32)).unwrap().clone();
-        let out_node = self.nodes.get(&(con.get_out_node() as i32)).unwrap().clone();
+        let out_node = self
+            .nodes
+            .get(&(con.get_out_node() as i32))
+            .unwrap()
+            .clone();
 
         // Disable the connection
         con.disable();
 
         // Add the new node and the new connections
         let new_node = NodeGene::new(NodeGeneType::HIDDEN, node_innovation.get_innovation());
-        
         let in_to_new = ConnectionGene::new(
             in_node.get_id(),
             new_node.get_id(),
@@ -251,7 +254,6 @@ impl Genome {
             true,
             connection_innovation.get_innovation(),
         );
-        
         let new_to_out = ConnectionGene::new(
             new_node.get_id(),
             out_node.get_id(),
@@ -339,17 +341,17 @@ impl Genome {
     pub fn compatibility_distance(
         genome1: &Genome,
         genome2: &Genome,
-        c1: f32,
-        c2: f32,
-        c3: f32,
-    ) -> f32 {
-        let excess_genes = Genome::count_excess_genes(&genome1, &genome2) as f32;
-        let disjoint_genes = Genome::count_disjoint_genes(&genome1, &genome2) as f32;
+        c1: f64,
+        c2: f64,
+        c3: f64,
+    ) -> f64 {
+        let excess_genes = Genome::count_excess_genes(&genome1, &genome2) as f64;
+        let disjoint_genes = Genome::count_disjoint_genes(&genome1, &genome2) as f64;
         let avg_weight_diff = Genome::average_weight_diff(&genome1, &genome2);
 
         // Number of genes in the larger genome, normalizes for genome size
         // (can be set to 1 if both genomes are small, i.e, consists of fewer than 20 genes)
-        let n = 1.0;
+        let n = 1.0; // self.nodes.size()
 
         ((c1 * excess_genes) / n) + ((c2 * disjoint_genes) / n) + c3 * avg_weight_diff
     }
@@ -434,6 +436,7 @@ impl Genome {
 
         let highest_innovation1 = node_keys1.get(node_keys1.len() - 1).unwrap();
         let highest_innovation2 = node_keys2.get(node_keys2.len() - 1).unwrap();
+
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let node_genes_genome1 = genome1.get_node_genes();
@@ -465,8 +468,9 @@ impl Genome {
         let con_keys2 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
 
-        let highest_innovation1 = con_keys1.get(node_keys1.len() - 1).unwrap();
-        let highest_innovation2 = con_keys2.get(node_keys2.len() - 1).unwrap();
+        let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
+        let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
+
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let connection_genes_genome1 = genome1.get_connection_genes();
@@ -504,6 +508,7 @@ impl Genome {
 
         let highest_innovation1 = node_keys1.get(node_keys1.len() - 1).unwrap();
         let highest_innovation2 = node_keys2.get(node_keys2.len() - 1).unwrap();
+
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let node_genes_genome1 = genome1.get_node_genes();
@@ -534,8 +539,9 @@ impl Genome {
         let con_keys2 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
 
-        let highest_innovation1 = con_keys1.get(node_keys1.len() - 1).unwrap();
-        let highest_innovation2 = con_keys2.get(node_keys2.len() - 1).unwrap();
+        let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
+        let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
+
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let connection_genes_genome1 = genome1.get_connection_genes();
@@ -559,12 +565,13 @@ impl Genome {
                 excess_genes += 1;
             }
         }
+
         excess_genes
     }
 
-    pub fn average_weight_diff(genome1: &Genome, genome2: &Genome) -> f32 {
+    pub fn average_weight_diff(genome1: &Genome, genome2: &Genome) -> f64 {
         let mut matching_genes: i32 = 0;
-        let mut weight_difference: f32 = 0.0;
+        let mut weight_difference: f64 = 0.0;
 
         let con_keys1 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
@@ -573,6 +580,7 @@ impl Genome {
 
         let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
         let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
+
         let indices = cmp::max(highest_innovation1, highest_innovation2).clone();
         for i in 0..indices {
             let connection_genes_genome1 = genome1.get_connection_genes();
@@ -599,7 +607,7 @@ impl Genome {
             }
         }
 
-        weight_difference / (matching_genes as f32)
+        weight_difference / (matching_genes as f64)
     }
 
     /// # as_sorted_vec
