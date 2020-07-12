@@ -9,6 +9,13 @@ use crate::GenomePrinter;
 pub mod fitness_genome;
 use crate::FitnessGenome;
 
+use std::fs::*;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Stats {
+    this_generation_kills: i32,
+}
+
 pub struct Evaluator {
     config: Config,
 
@@ -25,12 +32,14 @@ pub struct Evaluator {
 
     node_innovation: Counter,
     connection_innovation: Counter,
+
+    stats: Stats,
 }
 
 impl Evaluator {
     pub fn new() -> Evaluator {
         Evaluator {
-            config: Config::new(0, 0),
+            config: Config::new(0, 0, 0),
 
             players: Vec::new(),
             species: Vec::new(),
@@ -44,6 +53,10 @@ impl Evaluator {
 
             node_innovation: Counter::new(),
             connection_innovation: Counter::new(),
+
+            stats: Stats {
+                this_generation_kills: 0,
+            },
         }
     }
 
@@ -54,14 +67,17 @@ impl Evaluator {
         config: &Config,
         default_genome: &Genome,
         genome_provider: Box<dyn GenesisGenomeProvider>,
+
+        node_innovation: &mut Counter,
+        connection_innovation: &mut Counter,
     ) {
         self.config = config.clone();
         // Clear the values
         self.species.clear();
         self.players.clear();
 
-        self.node_innovation.current_innovation = default_genome.nodes.len() as i32;
-        self.connection_innovation.current_innovation = default_genome.connections.len() as i32;
+        self.node_innovation.current_innovation = node_innovation.load_innovation();
+        self.connection_innovation.current_innovation = connection_innovation.load_innovation();
 
         for _ in 0..self.config.get_population_size() {
             let g: Genome = genome_provider
@@ -73,10 +89,9 @@ impl Evaluator {
 
     /// # evaluate_generation
     /// Evaluates a generation, speciates it and kills old unused genomes
-    pub fn evaluate_generation(
-        &mut self,
-        fitness_provider: Box<dyn FitnessGenomeProvider>
-    ) {
+    pub fn evaluate_generation(&mut self, fitness_provider: Box<dyn FitnessGenomeProvider>) {
+        self.stats.this_generation_kills = 0;
+
         self.speciate();
         self.calculate_fitness(&fitness_provider);
         self.sort_players();
@@ -84,6 +99,7 @@ impl Evaluator {
         self.kill_species();
         self.set_best_player();
         self.kill_stale_species();
+        self.kill_bad_species();
 
         let average_sum = self.get_avg_fitness_sum();
 
@@ -93,14 +109,14 @@ impl Evaluator {
         for s in self.species.iter_mut() {
             children.push(s.players.get(0).unwrap().clone());
 
-            let mut no_of_childen =
-                (s.average_fitness / average_sum * self.players.len() as f64).floor() as i64;
+            // TODO: Debug
+            let mut no_of_children = (s.average_fitness / average_sum).floor() as i64 - 1;
 
-            if no_of_childen < 1 {
-                no_of_childen = 1;
+            if average_sum == 0.0 {
+                no_of_children = 1;
             }
 
-            for _ in 0..no_of_childen {
+            for _ in 0..no_of_children {
                 children.push(s.generate_offspring(
                     &mut self.connection_innovation,
                     &mut self.node_innovation,
@@ -112,13 +128,12 @@ impl Evaluator {
         // Check for flooring issues leading to wrong amount of children being created
         while children.len() < self.players.len() {
             // Generate children from the best species
-
             // Check if all species have gotten killed
             if self.species.len() < 1 {
                 println!("All species have gotten killed, ending generation");
                 return;
             }
- 
+
             children.push(self.species.get_mut(0).unwrap().generate_offspring(
                 &mut self.connection_innovation,
                 &mut self.node_innovation,
@@ -127,26 +142,39 @@ impl Evaluator {
         }
 
         // Assign the new players
-        self.update_players();
-        self.players.append(&mut children);
+        self.players = children;
 
         self.generation_id.get_innovation();
         println!(
-            "generation {}\n\tmutations count {}\n\tspecies: {}",
+            "generation {}\n\tmutations count {}\n\tspecies: {}\n\tkills: {}\n\tplayers: {}",
             self.generation_id.load_innovation(),
             self.node_innovation.load_innovation() + self.connection_innovation.load_innovation(),
-            self.species.len()
+            self.species.len(),
+            self.stats.this_generation_kills,
+            self.players.len()
         );
 
-        // Save the genomes as images
-        // let mut printer = GenomePrinter::new();
-        // for (i, p) in self.players.iter().enumerate() {
-        //     let _i = i.to_string();
-        //     let mut name = String::from("genome_");
-        //     name.push_str(&_i);
+        // Saving each species and all its genomes into directories
+        let mut printer = GenomePrinter::new();
+        for (i, s) in self.species.iter().enumerate() {
+            let _i = i.to_string();
+            let mut name = String::from("species_");
+            name.push_str(&_i);
 
-        //     printer.print_genome(&mut p.get_genome(), &name, &name);
-        // }
+            create_dir_all(String::from("./output/") + name.as_str()).unwrap();
+
+            for (i, p) in s.players.iter().enumerate() {
+                let _i = i.to_string();
+                let mut p_name = String::from("genome_");
+                p_name.push_str(&_i);
+
+                printer.print_genome(
+                    &mut p.get_genome(),
+                    &(String::from(name.clone()) + "/" + &p_name),
+                    &p_name,
+                );
+            }
+        }
     }
 
     pub fn update_players(&mut self) {
@@ -231,7 +259,7 @@ impl Evaluator {
     pub fn kill_species(&mut self) {
         for s in self.species.iter_mut() {
             // Kill bad individuals
-            s.kill();
+            self.stats.this_generation_kills += s.kill();
 
             // Protect unique individuals
             s.fitness_sharing();
@@ -250,6 +278,24 @@ impl Evaluator {
 
             i += 1;
         }
+
+        // Sort the species, kill the worst in the next step
+        self.sort_players();
+        self.sort_species();
+
+        // To keep performance stable, only keep a max amount of species alive
+        let mut temp = self.species.clone();
+        temp.reverse();
+
+        let mut i = 0;
+        while i < temp.len() && temp.len() > self.config.max_species {
+            temp.remove(i);
+            i -= 1;
+
+            i += 1;
+        }
+
+        self.species = temp;
     }
 
     pub fn set_best_player(&mut self) {
@@ -296,8 +342,8 @@ impl Evaluator {
 
     pub fn get_avg_fitness_sum(&mut self) -> f64 {
         let mut average_sum = 0.0;
-        for s in self.species.iter() {
-            average_sum += s.average_fitness
+        for s in self.species.iter_mut() {
+            average_sum += s.get_average_fitness();
         }
 
         average_sum

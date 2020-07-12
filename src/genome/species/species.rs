@@ -41,25 +41,28 @@ impl Species {
 
     /// # kill
     /// kills the worst performing genomes ("players")
-    pub fn kill(&mut self) -> bool {
+    pub fn kill(&mut self) -> i32 {
         // Sort the players by fitness
         self.sort_players();
 
+        let mut kill_count = 0;
+
         if self.players.len() < 2 {
-            return false;
+            return kill_count;
         }
 
         let cutoff_index = self.players.len() / 2;
         let mut i = 0;
         while i < self.players.len() {
             if i > cutoff_index {
+                kill_count += 1;
                 self.players.remove(i);
             } else {
                 i += 1;
             }
         }
 
-        true
+        kill_count
     }
 
     /// # sort_players
@@ -104,15 +107,8 @@ impl Species {
     /// # same_species
     /// Checks if a genome belongs to the same species
     pub fn same_species(&mut self, g: Genome, config: &Config) -> bool {
-        let mut distance =
+        let distance =
             Genome::compatibility_distance(&self.rep, &g, config.c1, config.c2, config.c3);
-
-        // TODO: Some distances are set to NaN (the float is set to an incorrect value)
-
-        if distance == f64::NAN {
-            println!("{:?}", (distance));
-            distance = 1.1; 
-        }
 
         config.compatibility_threshold > distance
     }
@@ -176,7 +172,6 @@ impl Species {
         let parent2 = self.select_parent().clone();
 
         // Create an empty fitnessgenome and generate crossover the parents
-
         if parent1.fitness < parent2.fitness {
             child = FitnessGenome::new_empty(Genome::crossover(
                 &parent2.genome,
@@ -215,24 +210,31 @@ impl Species {
         child
     }
 
-    pub fn select_parent(&mut self) -> &FitnessGenome {
-        let mut fitness_sum = 1.0;
-        for p in self.players.iter() {
-            fitness_sum += p.fitness;
-        }
+    pub fn select_parent(&mut self) -> FitnessGenome {
+        // TODO: Fix code, use random for now
+        
+        // let mut fitness_sum = 1.0;
+        // for p in self.players.iter() {
+        //     fitness_sum += p.fitness;
+        // }
+
+        // let mut rng = rand::thread_rng();
+        // let rand = rng.gen_range(0.0, fitness_sum);
+
+        // let mut running_sum = 0.0;
+        // for p in self.players.iter() {
+        //     running_sum += p.fitness;
+
+        //     if running_sum > rand {
+        //         println!("{:?}", ("YES"));
+        //         return p.clone();
+        //     }
+        // }
+
+        // return self.get_best_player().clone();
 
         let mut rng = rand::thread_rng();
-        let rand = rng.gen_range(0.0, fitness_sum);
-        let mut running_sum = 0.0;
 
-        for i in 0..self.players.len() {
-            running_sum += self.players[i].fitness;
-
-            if running_sum > rand {
-                return &self.players[i];
-            }
-        }
-
-        return self.get_best_player();
+        return self.players.get(rng.gen_range(0, self.players.len())).unwrap().clone();
     }
 }

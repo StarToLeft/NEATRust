@@ -201,9 +201,6 @@ impl Genome {
 
             success = true;
         }
-        if !success {
-            println!("A mutation connection could not be established");
-        }
     }
 
     // ! FUNCTION IS NOT RELIABLE, MAY SOMETIMES LOSE INPUTS AND OUTPUTS
@@ -226,7 +223,6 @@ impl Genome {
 
         // Check if there are any suitable connections
         if suitable_connections.is_empty() {
-            println!("A suitable connection was not found in the genome");
             return;
         }
 
@@ -396,6 +392,10 @@ impl Genome {
         let con_keys2 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
 
+        if con_keys1.len() == 0 || con_keys2.len() == 0 {
+            return 0;
+        }
+
         let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
         let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
 
@@ -468,6 +468,10 @@ impl Genome {
         let con_keys2 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
 
+        if con_keys1.len() == 0 || con_keys2.len() == 0 {
+            return 0;
+        }
+
         let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
         let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
 
@@ -539,6 +543,10 @@ impl Genome {
         let con_keys2 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
 
+        if con_keys1.len() == 0 || con_keys2.len() == 0 {
+            return 0;
+        }
+
         let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
         let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
 
@@ -570,13 +578,17 @@ impl Genome {
     }
 
     pub fn average_weight_diff(genome1: &Genome, genome2: &Genome) -> f64 {
-        let mut matching_genes: i32 = 0;
+        let mut matching_genes: i64 = 0;
         let mut weight_difference: f64 = 0.0;
 
         let con_keys1 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome1.get_connection_genes().keys()));
         let con_keys2 =
             Genome::as_sorted_vec(Genome::keys_to_vec(genome2.get_connection_genes().keys()));
+
+        if con_keys1.len() == 0 || con_keys2.len() == 0 {
+            return 0.0;
+        }
 
         let highest_innovation1 = con_keys1.get(con_keys1.len() - 1).unwrap();
         let highest_innovation2 = con_keys2.get(con_keys2.len() - 1).unwrap();
@@ -605,6 +617,10 @@ impl Genome {
                 weight_difference +=
                     (connection1.unwrap().get_weight() - connection2.unwrap().get_weight()).abs();
             }
+        }
+
+        if matching_genes == 0 {
+            return 0.0;
         }
 
         weight_difference / (matching_genes as f64)

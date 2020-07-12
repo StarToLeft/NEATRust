@@ -73,34 +73,26 @@ fn main() {
     let mut node_innovation: Counter = Counter::new();
 
     // Nodes
-    let n1 = node_innovation.get_innovation();
-    let n2 = node_innovation.get_innovation();
-    let n3 = node_innovation.get_innovation();
-
-    let input1 = NodeGene::new(NodeGeneType::INPUT, n1);
-    let input2 = NodeGene::new(NodeGeneType::INPUT, n2);
-    let output = NodeGene::new(NodeGeneType::OUTPUT, n3);
+    let input1 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation());
+    let input2 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation());
+    let input3 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation());
+    let output = NodeGene::new(NodeGeneType::OUTPUT, node_innovation.get_innovation());
 
     genome.add_node_gene(input1);
     genome.add_node_gene(input2);
+    genome.add_node_gene(input3);
     genome.add_node_gene(output);
-
-    // Connections
-    let c1 = connection_innovation.get_innovation();
-    let c2 = connection_innovation.get_innovation();
-    genome.add_connection_gene(ConnectionGene::new(n1, n3, 0.5, true, c1));
-    genome.add_connection_gene(ConnectionGene::new(n2, n3, 0.5, true, c1));
 
     // Configuration
     // Assign a starting population and generation count
-    let config: Config = Config::new(10, 30);
+    let config: Config = Config::new(100, 30, 30);
 
     // Genesis provider
     let provider = GenesisProvider::new();
 
     // Initialize the genome evaluator
     let mut evaluator = Evaluator::new();
-    evaluator.init(&config, &genome, Box::new(provider));
+    evaluator.init(&config, &genome, Box::new(provider), &mut node_innovation, &mut connection_innovation);
 
     for i in 1..config.get_generation_count() + 1 {
         // Fitness provider

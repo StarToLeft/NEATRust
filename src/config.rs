@@ -66,12 +66,13 @@ pub struct Config {
      */
     pub max_species_staleness_before_kill: i32,
 
-    population_size: usize,
-    generation_count: usize,
+    pub population_size: usize,
+    pub generation_count: usize,
+    pub max_species: usize,
 }
 
 impl Config {
-    pub fn new(population_size: usize, generation_count: usize) -> Config {
+    pub fn new(population_size: usize, generation_count: usize, max_species: usize) -> Config {
         Config {
             c1: 1.5,
             c2: 0.8,
@@ -80,16 +81,16 @@ impl Config {
 
             a_sexual_reproduction_rate: 0.25,
 
-            mutation_rate: 0.8,
+            mutation_rate: 0.9,
 
             pertrubing_rate: 0.9,
             
-            disabled_gene_inheriting_chance: 0.30,
+            disabled_gene_inheriting_chance: 0.15,
 
-            add_connection_rate: 0.05,
-            add_node_rate: 0.03,
+            add_connection_rate: 0.25,
+            add_node_rate: 0.23,
 
-            offspring_from_crossover: 0.75,
+            offspring_from_crossover: 0.9,
 
             compatibility_threshold: 1.0,
 
@@ -97,6 +98,7 @@ impl Config {
 
             population_size,
             generation_count,
+            max_species,
         }
     }
 
