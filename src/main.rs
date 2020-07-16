@@ -58,7 +58,7 @@ impl GenomeFitnessProvider {
 
 impl FitnessGenomeProvider for GenomeFitnessProvider {
     fn fitness_genome_evaluator(&self, genome: &Genome) -> f64 {
-        return genome.get_node_genes().len() as f64;
+        return genome.get_node_genes().len() as f64 * 2.0;
     }
 }
 

@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Counter {
     pub current_innovation: i32,
 }

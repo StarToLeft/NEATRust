@@ -211,30 +211,24 @@ impl Species {
     }
 
     pub fn select_parent(&mut self) -> FitnessGenome {
-        // TODO: Fix code, use random for now
-        
-        // let mut fitness_sum = 1.0;
-        // for p in self.players.iter() {
-        //     fitness_sum += p.fitness;
-        // }
-
-        // let mut rng = rand::thread_rng();
-        // let rand = rng.gen_range(0.0, fitness_sum);
-
-        // let mut running_sum = 0.0;
-        // for p in self.players.iter() {
-        //     running_sum += p.fitness;
-
-        //     if running_sum > rand {
-        //         println!("{:?}", ("YES"));
-        //         return p.clone();
-        //     }
-        // }
-
-        // return self.get_best_player().clone();
+        let mut fitness_sum = 1.0;
+        for p in self.players.iter() {
+            fitness_sum += p.fitness;
+        }
 
         let mut rng = rand::thread_rng();
+        let rand = rng.gen_range(0.0, fitness_sum);
 
-        return self.players.get(rng.gen_range(0, self.players.len())).unwrap().clone();
+        let mut running_sum = 0.0;
+        for p in self.players.iter() {
+            running_sum += p.fitness;
+
+            if running_sum > rand {
+                println!("{:?}", ("YES"));
+                return p.clone();
+            }
+        }
+
+        return self.get_best_player().clone();
     }
 }

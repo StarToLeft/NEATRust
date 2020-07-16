@@ -1,3 +1,6 @@
+use crate::NodeGene;
+use crate::Genome;
+
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct ConnectionGene {
     in_node: i32,

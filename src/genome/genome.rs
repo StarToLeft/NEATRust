@@ -19,6 +19,8 @@ use crate::Counter;
 pub struct Genome {
     pub connections: HashMap<i32, ConnectionGene>,
     pub nodes: HashMap<i32, NodeGene>,
+
+    pub layer: Counter,
 }
 
 impl Genome {
@@ -26,6 +28,8 @@ impl Genome {
         Self {
             connections: HashMap::new(),
             nodes: HashMap::new(),
+
+            layer: Counter::new(),
         }
     }
 
@@ -626,6 +630,10 @@ impl Genome {
         weight_difference / (matching_genes as f64)
     }
 
+    /* 
+        Utility functions
+    */
+    
     /// # as_sorted_vec
     /// Sorts a vector in a ascending order
     pub fn as_sorted_vec<K>(c: Vec<K>) -> Vec<K>
