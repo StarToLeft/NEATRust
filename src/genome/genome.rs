@@ -1,3 +1,4 @@
+use crate::Config;
 use std::cmp;
 use std::collections::hash_map::Keys;
 use std::collections::HashMap;
@@ -20,7 +21,7 @@ pub struct Genome {
     pub connections: HashMap<i32, ConnectionGene>,
     pub nodes: HashMap<i32, NodeGene>,
 
-    pub layer: Counter,
+    pub layers: i32,
 }
 
 impl Genome {
@@ -29,7 +30,8 @@ impl Genome {
             connections: HashMap::new(),
             nodes: HashMap::new(),
 
-            layer: Counter::new(),
+            // Default it to two layers, input and output
+            layers: 2,
         }
     }
 
@@ -66,6 +68,15 @@ impl Genome {
                 con.set_weight(rnd_float);
             }
         }
+
+        for connection in self.connections.values() {
+            let in_node: &NodeGene = self.nodes.get(&connection.get_in_node()).unwrap();
+            let out_node: &NodeGene = self.nodes.get(&connection.get_out_node()).unwrap();
+
+            if in_node.get_layer() == out_node.get_layer() {
+                println!("{:?}", ("Fuck"));
+            }
+        }
     }
 
     /// # add_node_gene
@@ -82,7 +93,7 @@ impl Genome {
 
     /// # add_connection_mutation
     /// Mutates connections for genome to the Genome
-    pub fn add_connection_mutation(&mut self, innovation: &mut Counter, max_attempts: i32) {
+    pub fn add_connection_mutation(&mut self, connection_innovation: &mut Counter, node_innovation: &mut Counter, config: &Config, max_attempts: i32) {
         let mut tries: i32 = 0;
         let mut success: bool = false;
 
@@ -93,10 +104,31 @@ impl Genome {
 
             let node_inovation_numbers: Vec<i32> = Genome::keys_to_vec(self.nodes.keys());
             let key_node1 = node_inovation_numbers[rng.gen_range(0, node_inovation_numbers.len())];
-            let key_node2 = node_inovation_numbers[rng.gen_range(0, node_inovation_numbers.len())];
 
             let mut node1 = self.nodes.get(&key_node1).unwrap();
-            let mut node2 = self.nodes.get(&key_node2).unwrap();
+            let mut node2 = self.nodes.get(&key_node1).unwrap();
+            let mut found_match = false;
+
+            for node in self.nodes.values() {
+                // Only connect connections to layers above the current layer
+                println!("{:?}", (node.get_layer(), node1.get_layer()));
+                if node.get_layer() > node1.get_layer() && node.get_layer() < node1.get_layer()+2 {
+                    found_match = true;
+                    node2 = node;
+                    break;
+                }
+
+                found_match = false;
+            };
+
+            // Check if it found a matching next node
+            if !found_match {
+                // TODO: FIX THIS DOES NOT WORK
+                // PROBLEM IS THERE ARE NO NODES TO ADD CONNECTIONS TO
+                // self.add_node_mutation(&mut connection_innovation, &mut node_innovation, config);
+                continue;
+            }
+
             let weight: f64 = rng.gen_range(-1.0, 1.0);
 
             // Check if the nodes should be reversed, in case, do it
@@ -199,7 +231,7 @@ impl Genome {
                 node2.get_id(),
                 weight,
                 true,
-                innovation.get_innovation(),
+                connection_innovation.get_innovation(),
             );
             self.connections.insert(new_con.get_innovation(), new_con);
 
@@ -214,13 +246,29 @@ impl Genome {
         &mut self,
         connection_innovation: &mut Counter,
         node_innovation: &mut Counter,
+        config: &Config,
     ) {
         let mut rng = rand::thread_rng();
+
+        // Get random layer
+        // Random factor to create new layer
+        let should_create_layer = if self.layers > 2 {
+            config.add_layer_rate > rng.gen::<f32>()
+        } else {
+            true
+        };
 
         // Find some suitable connections in the genome
         let mut suitable_connections: Vec<i32> = Vec::new();
         for connection in self.connections.values() {
-            if connection.is_expressed() {
+            let out_node = self.nodes.get(&connection.get_out_node()).unwrap();
+
+            if connection.is_expressed() && !should_create_layer {
+                suitable_connections.push(connection.get_innovation());
+            } else if connection.is_expressed()
+                && should_create_layer
+                && out_node.get_layer() == self.layers
+            {
                 suitable_connections.push(connection.get_innovation());
             }
         }
@@ -230,23 +278,25 @@ impl Genome {
             return;
         }
 
+        if should_create_layer {
+            self.layers += 1;
+        }
+
+        // Get a random connection to connect the node to
         let length = rng.gen_range(0, suitable_connections.len());
         let con = suitable_connections.get(length).unwrap();
         let con = self.connections.get_mut(con).unwrap();
 
         // Get the connections in and out nodes, then disable the connection and create a new one
-        let in_node = self.nodes.get(&(con.get_in_node() as i32)).unwrap().clone();
-        let out_node = self
-            .nodes
-            .get(&(con.get_out_node() as i32))
-            .unwrap()
-            .clone();
+        let in_node = self.nodes.get(&con.get_in_node()).unwrap().clone();
+        let out_node = self.nodes.get(&con.get_out_node()).unwrap().clone();
 
         // Disable the connection
         con.disable();
 
         // Add the new node and the new connections
-        let new_node = NodeGene::new(NodeGeneType::HIDDEN, node_innovation.get_innovation());
+        // Add it to a random (hidden)layer, therefor between 1 and self.layers - 1, to get rid of input and output
+        let new_node = NodeGene::new(NodeGeneType::HIDDEN, node_innovation.get_innovation(), self.layers);
         let in_to_new = ConnectionGene::new(
             in_node.get_id(),
             new_node.get_id(),
@@ -630,10 +680,9 @@ impl Genome {
         weight_difference / (matching_genes as f64)
     }
 
-    /* 
+    /*
         Utility functions
     */
-    
     /// # as_sorted_vec
     /// Sorts a vector in a ascending order
     pub fn as_sorted_vec<K>(c: Vec<K>) -> Vec<K>

@@ -1,7 +1,7 @@
 use crate::ConnectionGene;
+use crate::Genome;
 use crate::NodeGene;
 use crate::NodeGeneType;
-use crate::Genome;
 
 use image::{Rgb, RgbImage};
 use imageproc::drawing::*;
@@ -9,6 +9,8 @@ use imageproc::rect::*;
 use rusttype::{Font, Scale};
 
 use std::path::Path;
+
+use rand::Rng;
 
 pub struct GenomePrinter {}
 
@@ -52,7 +54,13 @@ impl GenomePrinter {
         };
 
         // Draw the name in the center
-        draw_text_mut(&mut image, black, 80, 80, name_font_scale, &font, name);
+        draw_text_mut(&mut image, black, 20, 20, name_font_scale, &font, name);
+
+        draw_hollow_rect_mut(
+            &mut image,
+            imageproc::rect::Rect::at(10, 10).of_size(790, 790),
+            black,
+        );
 
         // Array used for keeping track of node locations on the grid
         let mut node_locations: Vec<PrintNodeLocation> = Vec::new();
@@ -77,12 +85,12 @@ impl GenomePrinter {
                 pos = 600.0 - pos;
 
                 // Draw circle
-                draw_filled_circle_mut(&mut image, (pos as i32, 600), 18, black);
-                draw_filled_circle_mut(&mut image, (pos as i32, 600), 16, yellow);
+                draw_filled_circle_mut(&mut image, (pos as i32, 700), 18, black);
+                draw_filled_circle_mut(&mut image, (pos as i32, 700), 16, yellow);
                 node_locations.push(PrintNodeLocation::new(
                     node.get_id(),
                     pos as i32,
-                    600,
+                    700,
                     NodeGeneType::INPUT,
                 ));
 
@@ -91,7 +99,7 @@ impl GenomePrinter {
                     &mut image,
                     black,
                     pos as u32 - 5,
-                    600 - 10,
+                    700 - 10,
                     font_scale,
                     &font,
                     &(node.get_id()).to_string(),
@@ -113,41 +121,18 @@ impl GenomePrinter {
                 .iter()
                 .filter(|x| x.get_type() == NodeGeneType::HIDDEN);
 
-            let hidden_count = hidden.to_owned().count() as i32;
-            let mut current = 0;
-
             for node in hidden {
-                let mut pos = 600.0 * (current as f64 / hidden_count as f64);
-                if pos == 0.0 {
-                    pos = 1.0;
-                }
-                pos = 600.0 - pos;
+                let mut rng = rand::thread_rng();
 
-                let mut y_pos = 400;
-
-                let mut last_was_moved = false;
-                for node_location in &node_locations {
-                    if node_location.node_type == NodeGeneType::HIDDEN
-                        && node_location.y == y_pos as i32
-                    {
-                        if !last_was_moved {
-                            y_pos -= 70;
-
-                            last_was_moved = true;
-                        } else {
-                            y_pos = 400;
-
-                            last_was_moved = false;
-                        }
-                    }
-                }
+                let x_pos = rng.gen_range(0, 800);
+                let y_pos = rng.gen_range(0, 800);
 
                 // Draw circle
-                draw_filled_circle_mut(&mut image, (pos as i32, y_pos), 18, black);
-                draw_filled_circle_mut(&mut image, (pos as i32, y_pos), 16, blue);
+                draw_filled_circle_mut(&mut image, (x_pos as i32, y_pos), 18, black);
+                draw_filled_circle_mut(&mut image, (x_pos as i32, y_pos), 16, blue);
                 node_locations.push(PrintNodeLocation::new(
                     node.get_id(),
-                    pos as i32,
+                    x_pos,
                     y_pos,
                     NodeGeneType::HIDDEN,
                 ));
@@ -156,15 +141,12 @@ impl GenomePrinter {
                 draw_text_mut(
                     &mut image,
                     black,
-                    pos as u32 - 5,
+                    (x_pos - 5) as u32,
                     (y_pos - 10) as u32,
                     font_scale,
                     &font,
                     &(node.get_id()).to_string(),
                 );
-
-                // Add to current
-                current += 1;
             }
         }
 
@@ -198,12 +180,12 @@ impl GenomePrinter {
                 }
 
                 // Draw circle
-                draw_filled_circle_mut(&mut image, (pos as i32, 200), 18, black);
-                draw_filled_circle_mut(&mut image, (pos as i32, 200), 16, red);
+                draw_filled_circle_mut(&mut image, (pos as i32, 100), 18, black);
+                draw_filled_circle_mut(&mut image, (pos as i32, 100), 16, red);
                 node_locations.push(PrintNodeLocation::new(
                     node.get_id(),
                     pos as i32,
-                    200,
+                    100,
                     NodeGeneType::OUTPUT,
                 ));
 
@@ -212,7 +194,7 @@ impl GenomePrinter {
                     &mut image,
                     black,
                     pos as u32 - 5,
-                    200 - 10,
+                    100 - 10,
                     font_scale,
                     &font,
                     &(node.get_id()).to_string(),

@@ -50,7 +50,12 @@ pub struct Config {
      * Chance of mutating a child in a way that adds a connection to the genome.
      */
     pub add_node_rate: f32,
-    
+
+    /**
+     * Chance of adding a new layer while mutating node.
+     */
+    pub add_layer_rate: f32,
+
     /**
      * Percentage of offspring generated using crossover of two parents - the rest comes from asexual mutation
      */
@@ -89,6 +94,7 @@ impl Config {
 
             add_connection_rate: 0.25,
             add_node_rate: 0.23,
+            add_layer_rate: 0.08,
 
             offspring_from_crossover: 0.9,
 

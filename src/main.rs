@@ -13,17 +13,19 @@ use lib::Config;
 use lib::ConnectionGene;
 use lib::Counter;
 use lib::Evaluator;
+use lib::FitnessGenome;
 use lib::Genome;
 use lib::GenomePrinter;
 use lib::NodeGene;
 use lib::NodeGeneType;
-use lib::FitnessGenome;
 use lib::Species;
 
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
 use std::env;
+
+use std::process::Command;
 
 // Genesis provider
 pub struct GenesisProvider {}
@@ -63,25 +65,35 @@ impl FitnessGenomeProvider for GenomeFitnessProvider {
 }
 
 fn main() {
+    // Clear the output
+    Command::new("cmd")
+        .args(&["/C", "cd output&clear.bat"])
+        .output()
+        .expect("failed to execute process");
+
+    // Create a time to measure elapsed time
     let timer = std::time::Instant::now();
 
     let mut printer = GenomePrinter::new();
 
+    // Default, representing genome
     let mut genome = Genome::new();
 
     let mut connection_innovation: Counter = Counter::new();
     let mut node_innovation: Counter = Counter::new();
 
     // Nodes
-    let input1 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation());
-    let input2 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation());
-    let input3 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation());
-    let output = NodeGene::new(NodeGeneType::OUTPUT, node_innovation.get_innovation());
+    let input1 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation(), 0);
+    let input2 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation(), 0);
+    let input3 = NodeGene::new(NodeGeneType::INPUT, node_innovation.get_innovation(), 0);
+    let output = NodeGene::new(NodeGeneType::OUTPUT, node_innovation.get_innovation(), 2);
 
     genome.add_node_gene(input1);
     genome.add_node_gene(input2);
     genome.add_node_gene(input3);
     genome.add_node_gene(output);
+
+    printer.print_genome(&mut genome, "REP_GENOME", "REP_GENOME");
 
     // Configuration
     // Assign a starting population and generation count
@@ -92,16 +104,20 @@ fn main() {
 
     // Initialize the genome evaluator
     let mut evaluator = Evaluator::new();
-    evaluator.init(&config, &genome, Box::new(provider), &mut node_innovation, &mut connection_innovation);
+    evaluator.init(
+        &config,
+        &genome,
+        Box::new(provider),
+        &mut node_innovation,
+        &mut connection_innovation,
+    );
 
     for i in 1..config.get_generation_count() + 1 {
         // Fitness provider
         let fitness_provider = GenomeFitnessProvider::new();
 
         // Evaluate the generation
-        evaluator.evaluate_generation(
-            Box::new(fitness_provider)
-        );
+        evaluator.evaluate_generation(Box::new(fitness_provider));
 
         // println!("Generation: {}", i);
         // println!(

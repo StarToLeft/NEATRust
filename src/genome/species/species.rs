@@ -197,14 +197,14 @@ impl Species {
         if rng.gen::<f32>() < config.add_node_rate {
             child
                 .genome
-                .add_node_mutation(&mut connection_innovation, &mut node_innovation);
+                .add_node_mutation(&mut connection_innovation, &mut node_innovation, &config);
         }
 
         // Random connection mutation
         if rng.gen::<f32>() < config.add_connection_rate {
             child
                 .genome
-                .add_connection_mutation(&mut connection_innovation, 100);
+                .add_connection_mutation(&mut connection_innovation, &mut node_innovation, &config, 100);
         }
 
         child
@@ -224,7 +224,6 @@ impl Species {
             running_sum += p.fitness;
 
             if running_sum > rand {
-                println!("{:?}", ("YES"));
                 return p.clone();
             }
         }
